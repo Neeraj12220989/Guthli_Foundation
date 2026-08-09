@@ -346,6 +346,7 @@ const backToTop = {
 const themeToggle = {
     init() {
         const toggle = document.getElementById('themeToggle');
+        if (!toggle) return; // Guard: theme toggle not present in DOM
         const html = document.documentElement;
         const sunIcon = toggle.querySelector('.sun-icon');
         const moonIcon = toggle.querySelector('.moon-icon');
@@ -734,6 +735,321 @@ const mobileAdaptation = {
 };
 
 // ============================================
+// INDEPENDENCE DAY BANNER
+// ============================================
+const independenceBanner = {
+    init() {
+        const closeBtn = document.getElementById('bannerClose');
+        const banner = document.querySelector('.independence-banner');
+        if (!closeBtn || !banner) return;
+
+        // Apply banner offset so the fixed navbar sits below it
+        const applyOffset = () => {
+            const height = banner.offsetHeight || 46;
+            document.documentElement.style.setProperty('--banner-height', height + 'px');
+            document.body.classList.add('banner-visible');
+        };
+
+        closeBtn.addEventListener('click', () => {
+            banner.style.display = 'none';
+            document.body.classList.remove('banner-visible');
+            document.documentElement.style.setProperty('--banner-height', '0px');
+        });
+
+        // Apply after layout is ready
+        if (document.readyState === 'complete') {
+            applyOffset();
+        } else {
+            window.addEventListener('load', applyOffset);
+        }
+    }
+};
+
+// ============================================
+// VOLUNTEER / APPLY MODAL
+// ============================================
+const applyModal = {
+    // ----------------------------------------------------
+    // EmailJS Configuration  (VOLUNTEER / APPLY FORM)
+    // service_2tfcpgi   -> Service ID
+    // template_vrt6ibc  -> Template ID  (for applications)
+    // 5ATVd4xHeSdttqrIw -> Public Key
+    //
+    // IMPORTANT: The application form uses its own dedicated
+    // EmailJS template. In the EmailJS dashboard, the template
+    // used here MUST contain these placeholders so that the
+    // received email shows "Application For" and "Submitted On":
+    //   Subject: New Application from {{name}}
+    //   Body:
+    //     Name          : {{name}}
+    //     Email         : {{email}}
+    //     Phone         : {{phone}}
+    //     Application For: {{application_type}}
+    //     Submitted On  : {{time}}
+    //     Message       : {{message}}
+    //     Reply-To      : {{email}}
+    // ----------------------------------------------------
+    EMAILJS_SERVICE_ID: 'service_2tfcpgi',
+    EMAILJS_TEMPLATE_ID: 'template_vrt6ibc',
+    EMAILJS_PUBLIC_KEY: '5ATVd4xHeSdttqrIw',
+
+    init() {
+        this.modal = document.getElementById('applyModal');
+        this.closeBtn = document.getElementById('modalClose');
+        this.form = document.getElementById('applyForm');
+        if (!this.modal || !this.form) return;
+
+        // Initialize EmailJS with public key
+        emailjs.init(this.EMAILJS_PUBLIC_KEY);
+
+        // Email address to receive applications
+        this.recipientEmail = 'guthlifoundation2026@gmail.com';
+
+// Open modal triggers
+        document.querySelectorAll('.apply-btn, .apply-cta-btn, .btn-primary[data-open-modal]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.open();
+            });
+        });
+
+        // "Become a Volunteer" CTA button
+        const volunteerBtn = document.querySelector('.cta .btn-primary');
+        if (volunteerBtn) {
+            volunteerBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.open();
+            });
+        }
+
+        // Close events
+        this.closeBtn.addEventListener('click', () => this.close());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.close();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) this.close();
+        });
+
+        // Form submission -> EmailJS
+        this.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.submitApplication();
+        });
+    },
+
+    open() {
+        this.modal.classList.add('active');
+        this.modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        // Pause lenis scroll
+        if (smoothScroll.lenis) smoothScroll.lenis.stop();
+    },
+
+    close() {
+        this.modal.classList.remove('active');
+        this.modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (smoothScroll.lenis) smoothScroll.lenis.start();
+    },
+
+    submitApplication() {
+        const name = document.getElementById('appName').value.trim();
+        const email = document.getElementById('appEmail').value.trim();
+        const phone = document.getElementById('appPhone').value.trim();
+        const role = document.getElementById('appRole').value;
+        const message = document.getElementById('appMessage').value.trim();
+
+        // Basic validation
+        if (!name || !email || !phone || !role || !message) {
+            alert('Please fill in all the fields before submitting.');
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        // Show "sending" feedback
+        const submitBtn = this.form.querySelector('.modal-submit');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '⏳ Sending...';
+        submitBtn.disabled = true;
+
+// Template parameters for EmailJS (template_vrt6ibc)
+        // Matches the placeholders used in the EmailJS template:
+        // {{name}}, {{email}}, {{phone}}, {{application_type}}, {{time}}, {{message}}
+        const templateParams = {
+            name: name,
+            email: email,
+            phone: phone,
+            application_type: role, // Role / Position (shown as "Application For")
+            time: new Date().toLocaleString('en-IN', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+}),
+            message: message,
+            recipient: this.recipientEmail
+        };
+
+        // Send via EmailJS
+        emailjs.send(
+            this.EMAILJS_SERVICE_ID,
+            this.EMAILJS_TEMPLATE_ID,
+            templateParams
+        ).then(() => {
+            // Success
+            submitBtn.textContent = '✓ Application Sent!';
+            submitBtn.style.background = 'linear-gradient(135deg, #2E8B57, #0B6E4F)';
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.style.background = '';
+                submitBtn.disabled = false;
+                this.form.reset();
+                this.close();
+            }, 1500);
+        }).catch((error) => {
+            // Error
+            console.error('EmailJS error:', error);
+            submitBtn.textContent = '✗ Failed. Please try again.';
+            submitBtn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.style.background = '';
+                submitBtn.disabled = false;
+            }, 2500);
+        });
+    }
+};
+
+// ============================================
+// EVENT REGISTRATION MODAL
+// ============================================
+const eventModal = {
+    // ----------------------------------------------------
+    // EmailJS Configuration (same account/service)
+    // service_2tfcpgi   -> Service ID
+    // template_nw8sg54  -> Template ID
+    // 5ATVd4xHeSdttqrIw -> Public Key
+    // ----------------------------------------------------
+    EMAILJS_SERVICE_ID: 'service_2tfcpgi',
+    EMAILJS_TEMPLATE_ID: 'template_nw8sg54',
+    EMAILJS_PUBLIC_KEY: '5ATVd4xHeSdttqrIw',
+
+    init() {
+        this.modal = document.getElementById('eventModal');
+        this.closeBtn = document.getElementById('eventModalClose');
+        this.form = document.getElementById('eventForm');
+        if (!this.modal || !this.form) return;
+
+        // Initialize EmailJS with public key
+        emailjs.init(this.EMAILJS_PUBLIC_KEY);
+
+        // Email address to receive event registrations
+        this.recipientEmail = 'guthlifoundation2026@gmail.com';
+
+        // Open modal from "Register for Event →" links
+        document.querySelectorAll('.event-register').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.open();
+            });
+        });
+
+        // Close events
+        this.closeBtn.addEventListener('click', () => this.close());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.close();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) this.close();
+        });
+
+        // Form submission -> EmailJS
+        this.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.submitRegistration();
+        });
+    },
+
+    open() {
+        this.modal.classList.add('active');
+        this.modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (smoothScroll.lenis) smoothScroll.lenis.stop();
+    },
+
+    close() {
+        this.modal.classList.remove('active');
+        this.modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (smoothScroll.lenis) smoothScroll.lenis.start();
+    },
+
+    submitRegistration() {
+        const name = document.getElementById('evtName').value.trim();
+        const email = document.getElementById('evtEmail').value.trim();
+        const phone = document.getElementById('evtPhone').value.trim();
+        const eventName = document.getElementById('evtSelect').value;
+        const count = document.getElementById('evtCount').value || '1';
+        const message = document.getElementById('evtMessage').value.trim();
+
+        // Basic validation
+        if (!name || !email || !phone || !eventName) {
+            alert('Please fill in the required fields before registering.');
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        // Show "sending" feedback
+        const submitBtn = this.form.querySelector('.modal-submit');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '⏳ Registering...';
+        submitBtn.disabled = true;
+
+        // Template parameters for EmailJS
+        const templateParams = {
+            name: name,
+            email: email,
+            phone: phone,
+            event: eventName,
+            count: count,
+            message: message,
+            recipient: this.recipientEmail
+        };
+
+        // Send via EmailJS
+        emailjs.send(
+            this.EMAILJS_SERVICE_ID,
+            this.EMAILJS_TEMPLATE_ID,
+            templateParams
+        ).then(() => {
+            submitBtn.textContent = '✓ Registration Received!';
+            submitBtn.style.background = 'linear-gradient(135deg, #2E8B57, #0B6E4F)';
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.style.background = '';
+                submitBtn.disabled = false;
+                this.form.reset();
+                this.close();
+            }, 1500);
+        }).catch((error) => {
+            console.error('EmailJS error:', error);
+            submitBtn.textContent = '✗ Failed. Please try again.';
+            submitBtn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.style.background = '';
+                submitBtn.disabled = false;
+            }, 2500);
+        });
+    }
+};
+
+// ============================================
 // INITIALIZE EVERYTHING
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -743,23 +1059,28 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize after preloader
     setTimeout(() => {
-        smoothScroll.init();
-        navigation.init();
-        mouseFollower.init();
-        heroParticles.init();
-        floatingLeaves.init();
-        scrollProgressBar.init();
-        backToTop.init();
-        themeToggle.init();
-        aosInit.init();
-        gsapAnimations.init();
-        ctaParticles.init();
-        newsletterForm.init();
-        rippleEffect.init();
-        tiltEffect.init();
-        sectionObserver.init();
-        smoothNavScroll.init();
-        mobileAdaptation.init();
+        const run = (fn) => { try { fn && fn(); } catch (e) { console.error('Init error:', e); } };
+
+        run(() => smoothScroll.init());
+        run(() => navigation.init());
+        run(() => independenceBanner.init());
+        run(() => mouseFollower.init());
+        run(() => heroParticles.init());
+        run(() => floatingLeaves.init());
+        run(() => scrollProgressBar.init());
+        run(() => backToTop.init());
+        run(() => themeToggle.init());
+        run(() => aosInit.init());
+        run(() => gsapAnimations.init());
+        run(() => ctaParticles.init());
+        run(() => newsletterForm.init());
+        run(() => rippleEffect.init());
+        run(() => tiltEffect.init());
+        run(() => sectionObserver.init());
+        run(() => smoothNavScroll.init());
+        run(() => mobileAdaptation.init());
+        run(() => applyModal.init());
+        run(() => eventModal.init());
     }, 100);
 });
 
@@ -780,4 +1101,3 @@ gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 console.log('%c🌱 Guthli Foundation', 'font-size: 24px; font-weight: bold; color: #0B6E4F;');
 console.log('%cEvery Seed Holds the Power of Change', 'font-size: 14px; color: #2E8B57; font-style: italic;');
 console.log('%cMade with ❤️ by DEVTRI', 'font-size: 12px; color: #6B7280;');
-
