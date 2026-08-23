@@ -630,22 +630,34 @@ const rippleEffect = {
 // ============================================
 const tiltEffect = {
     init() {
-        document.querySelectorAll('.about-illustration').forEach(el => {
+        const interactiveTargets = document.querySelectorAll('.about-illustration, .vision-visual, .mission-card, .focus-card, .team-card, .event-card, .job-card, .join-card, .approach-card-inner');
+
+        interactiveTargets.forEach(el => {
             el.addEventListener('mousemove', (e) => {
                 const rect = el.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
-                const rotateX = (y - centerY) / centerY * -10;
-                const rotateY = (x - centerX) / centerX * 10;
+                const rotateX = (y - centerY) / centerY * -8;
+                const rotateY = (x - centerX) / centerX * 8;
+                const glowX = (x / rect.width) * 100;
+                const glowY = (y / rect.height) * 100;
 
-                el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+                el.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+                el.style.setProperty('--pointer-x', `${glowX}%`);
+                el.style.setProperty('--pointer-y', `${glowY}%`);
             });
 
             el.addEventListener('mouseleave', () => {
-                el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                el.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0)';
                 el.style.transition = 'transform 0.5s ease';
+                el.style.setProperty('--pointer-x', '50%');
+                el.style.setProperty('--pointer-y', '50%');
+            });
+
+            el.addEventListener('mouseenter', () => {
+                el.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
             });
         });
     }
