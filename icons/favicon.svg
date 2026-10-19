@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <defs>
+        <linearGradient id="favGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#0B6E4F"/>
+            <stop offset="100%" style="stop-color:#2E8B57"/>
+        </linearGradient>
+    </defs>
+    <!-- Seed shape -->
+    <path d="M50 15 Q56 35 50 55 Q44 35 50 15" fill="url(#favGrad)"/>
+    <!-- Sprout left -->
+    <path d="M50 55 Q35 65 30 85 Q42 75 50 55" fill="url(#favGrad)" opacity="0.7"/>
+    <!-- Sprout right -->
+    <path d="M50 55 Q65 65 70 85 Q58 75 50 55" fill="url(#favGrad)" opacity="0.7"/>
+    <!-- Stem -->
+    <line x1="50" y1="55" x2="50" y2="92" stroke="#0B6E4F" stroke-width="2" opacity="0.5"/>
+    <!-- Leaf center -->
+    <ellipse cx="50" cy="50" rx="8" ry="4" fill="#2E8B57" opacity="0.5" transform="rotate(-30 50 50)"/>
+    <ellipse cx="50" cy="50" rx="8" ry="4" fill="#0B6E4F" opacity="0.4" transform="rotate(30 50 50)"/>
+</svg>
+
