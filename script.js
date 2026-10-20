@@ -1,1115 +1,476 @@
-/* ====================================================
-   GUTHILI FOUNDATION — Premium NGO Website
-   script.js
-   ==================================================== */
+/* Guthli Foundation — small, dependency-light interaction layer */
+(() => {
+  'use strict';
 
-// ============================================
-// PRELOADER
-// ============================================
-const preloader = {
-    init() {
-        const loader = document.getElementById('preloader');
-        const progressBar = document.querySelector('.preloader-progress');
-        const percentageEl = document.getElementById('preloaderPercentage');
-        let progress = 0;
-        
-        const interval = setInterval(() => {
-            progress += Math.random() * 15 + 5;
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(interval);
-                setTimeout(() => {
-                    loader.classList.add('hidden');
-                    document.body.style.overflow = 'visible';
-                    this.initAnimations();
-                }, 500);
-            }
-            progressBar.style.width = progress + '%';
-            percentageEl.textContent = Math.floor(progress) + '%';
-        }, 200);
-    },
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const formatNumber = (value) => Math.round(value).toLocaleString('en-IN');
 
-    initAnimations() {
-        // Trigger GSAP animations after preloader
-        this.animateHeroElements();
-    },
+  
+function initLoader() {
+  const loader = document.getElementById('preloader');
+  const progress = loader?.querySelector('.preloader-progress');
+  const percentage = loader?.querySelector('#preloaderPercentage');
 
-    animateHeroElements() {
-        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-        
-        tl.from('.hero-title .text-reveal-inner', {
-            y: '100%',
-            duration: 1.2,
-            stagger: 0.15,
-            ease: 'power4.out'
-        })
-        .from('.hero-subtitle', {
-            y: 40,
-            opacity: 0,
-            duration: 0.8
-        }, '-=0.6')
-        .from('.hero-motto', {
-            y: 30,
-            opacity: 0,
-            duration: 0.8
-        }, '-=0.5')
-        .from('.hero-buttons .btn', {
-            y: 30,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.2
-        }, '-=0.4')
-        .from('.scroll-indicator', {
-            y: 20,
-            opacity: 0,
-            duration: 0.8
-        }, '-=0.3');
-    }
-};
+  if (!loader) return;
 
-// ============================================
-// SMOOTH SCROLL WITH LENIS
-// ============================================
-const smoothScroll = {
-    lenis: null,
+  // Respect reduced-motion preferences.
+  if (prefersReducedMotion.matches) {
+    loader.remove();
+    return;
+  }
 
-    init() {
-        this.lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            direction: 'vertical',
-            gestureDirection: 'vertical',
-            smooth: true,
-            smoothTouch: true,
-            touchMultiplier: 1.2,
-            wheelMultiplier: 0.8,
-            mouseMultiplier: 1,
-            infinite: false,
-            lerp: 0.08,
-        });
+  let finished = false;
+  let fallbackTimer;
 
-        // Link Lenis scroll to GSAP ScrollTrigger
-        this.lenis.on('scroll', ScrollTrigger.update);
+  const finishLoader = () => {
+    if (finished) return;
+    finished = true;
+    window.clearTimeout(fallbackTimer);
 
-        // Use requestAnimationFrame for smoother GSAP + Lenis integration
-        gsap.ticker.lagSmoothing(0);
-        gsap.ticker.add((time) => {
-            this.lenis.raf(time * 1000);
-        });
+    if (progress) progress.style.width = '100%';
+    if (percentage) percentage.textContent = '100%';
 
-        // Handle resize events to recalculate
-        window.addEventListener('resize', () => {
-            this.lenis.resize();
-        });
-    }
-};
+    window.setTimeout(() => {
+      loader.classList.add('hidden');
+      window.setTimeout(() => loader.remove(), 500);
+    }, 180);
+  };
 
-// ============================================
-// NAVIGATION
-// ============================================
-const navigation = {
-    init() {
-        this.navbar = document.getElementById('navbar');
-        this.navToggle = document.getElementById('navToggle');
-        this.navMenu = document.getElementById('navMenu');
-        this.navLinks = document.querySelectorAll('.nav-link');
-        
-        this.handleScroll();
-        this.handleToggle();
-        this.handleLinks();
-        this.magneticButtons();
-    },
+  // Show an initial loading state.
+  requestAnimationFrame(() => {
+    if (progress) progress.style.width = '72%';
+    if (percentage) percentage.textContent = '72%';
+  });
 
-    handleScroll() {
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 100) {
-                this.navbar.classList.add('scrolled');
-            } else {
-                this.navbar.classList.remove('scrolled');
-            }
-        });
-    },
+  // Hide the loader when the page finishes loading.
+  if (document.readyState === 'complete') {
+    window.setTimeout(finishLoader, 220);
+  } else {
+    window.addEventListener('load', finishLoader, { once: true });
+  }
 
-    handleToggle() {
-        this.navToggle.addEventListener('click', () => {
-            this.navToggle.classList.toggle('active');
-            this.navMenu.classList.toggle('active');
-            document.body.style.overflow = this.navMenu.classList.contains('active') ? 'hidden' : '';
-        });
-    },
+  // Never leave the loader covering the page indefinitely.
+  fallbackTimer = window.setTimeout(finishLoader, 1600);
+}
 
-    handleLinks() {
-        this.navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                this.navToggle.classList.remove('active');
-                this.navMenu.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        });
-    },
+  
 
-    magneticButtons() {
-        document.querySelectorAll('.magnetic-btn').forEach(btn => {
-            btn.addEventListener('mousemove', (e) => {
-                const rect = btn.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-                btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
-            });
+  function initNavigation() {
+    const toggle = document.getElementById('navToggle');
+    const menu = document.getElementById('navMenu');
+    const navbar = document.getElementById('navbar');
+    if (!toggle || !menu || !navbar) return;
 
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = 'translate(0, 0)';
-            });
-        });
-    }
-};
+    const setMenuOpen = (isOpen) => {
+      toggle.classList.toggle('active', isOpen);
+      menu.classList.toggle('active', isOpen);
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      toggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+    };
 
-// ============================================
-// MOUSE FOLLOWER
-// ============================================
-const mouseFollower = {
-    init() {
-        const follower = document.getElementById('mouseFollower');
-        let mouseX = 0, mouseY = 0;
-        let currentX = 0, currentY = 0;
+    toggle.addEventListener('click', () => setMenuOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+    menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setMenuOpen(false)));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    });
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
+    let scrollQueued = false;
+    const updateScrollUi = () => {
+      const scrollTop = window.scrollY;
+      navbar.classList.toggle('scrolled', scrollTop > 24);
+      const backToTop = document.getElementById('backToTop');
+      if (backToTop) backToTop.classList.toggle('visible', scrollTop > 550);
+      const progressBar = document.getElementById('scrollProgress');
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      if (progressBar) progressBar.style.width = `${scrollable > 0 ? (scrollTop / scrollable) * 100 : 0}%`;
+      scrollQueued = false;
+    };
+    window.addEventListener('scroll', () => {
+      if (scrollQueued) return;
+      scrollQueued = true;
+      window.requestAnimationFrame(updateScrollUi);
+    }, { passive: true });
+    updateScrollUi();
 
-        // Hide on touch devices
-        if ('ontouchstart' in window) {
-            follower.style.display = 'none';
-            return;
+    const backToTop = document.getElementById('backToTop');
+    backToTop?.addEventListener('click', () => window.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion.matches ? 'auto' : 'smooth'
+    }));
+  }
+
+  function initBanner() {
+    const close = document.getElementById('bannerClose');
+    const banner = document.querySelector('.independence-banner');
+    close?.addEventListener('click', () => banner?.remove());
+  }
+
+  function initSeedStory() {
+    const story = document.querySelector('.seed-story');
+    const stage = story?.querySelector('.story-art');
+    const beats = [...(story?.querySelectorAll('.story-beat') ?? [])];
+    if (!story || !stage || !beats.length) return;
+
+    const stageNames = ['A possibility', 'Strong roots', 'New growth', 'A shared canopy'];
+    const label = story.querySelector('#storyStageName');
+    const count = story.querySelector('#storyStageCount');
+    const progress = story.querySelector('.story-progress span');
+    let currentStage = -1;
+    const updateStage = (index) => {
+      if (index === currentStage) return;
+      currentStage = index;
+      beats.forEach((beat, beatIndex) => {
+        const active = beatIndex === index;
+        beat.classList.toggle('is-active', active);
+        if (active) beat.setAttribute('aria-current', 'step');
+        else beat.removeAttribute('aria-current');
+      });
+      stage.dataset.storyStage = String(index + 1);
+      if (label) label.textContent = stageNames[index];
+      if (count) count.textContent = `0${index + 1} / 0${beats.length}`;
+      if (progress && window.gsap) {
+        window.gsap.to(progress, { scaleX: (index + 1) / beats.length, duration: .42, ease: 'power2.out', overwrite: true });
+      } else if (progress) {
+        progress.style.transform = `scaleX(${(index + 1) / beats.length})`;
+      }
+    };
+
+    updateStage(0);
+
+    if (prefersReducedMotion.matches) return;
+
+    const syncStoryChapter = () => {
+      const readingLine = window.innerHeight * .58;
+      let activeIndex = 0;
+      beats.forEach((beat, index) => {
+        if (beat.getBoundingClientRect().top <= readingLine) activeIndex = index;
+      });
+      updateStage(activeIndex);
+    };
+    let storyScrollQueued = false;
+    const queueStoryChapterSync = () => {
+      if (storyScrollQueued) return;
+      storyScrollQueued = true;
+      requestAnimationFrame(() => {
+        syncStoryChapter();
+        storyScrollQueued = false;
+      });
+    };
+    window.addEventListener('scroll', queueStoryChapterSync, { passive: true });
+    window.addEventListener('resize', queueStoryChapterSync, { passive: true });
+
+    if (window.gsap && window.ScrollTrigger) {
+      window.gsap.registerPlugin(window.ScrollTrigger);
+      const roots = [...stage.querySelectorAll('.story-plant-root')];
+      const stems = [...stage.querySelectorAll('.story-plant-stem')];
+      const branches = [...stage.querySelectorAll('.story-plant-branch')];
+      const leaves = [...stage.querySelectorAll('.story-leaf')];
+      [...roots, ...stems, ...branches].forEach((path) => {
+        const length = path.getTotalLength();
+        window.gsap.set(path, { strokeDasharray: length, strokeDashoffset: length });
+      });
+      window.gsap.set(leaves, { autoAlpha: 0, scale: .45, transformOrigin: '50% 75%' });
+      stage.classList.add('story-art-enhanced');
+
+      const growth = window.gsap.timeline({
+        scrollTrigger: {
+          trigger: story.querySelector('.story-beats'),
+          start: 'top 66%',
+          end: 'bottom 72%',
+          scrub: 1,
+          onUpdate: syncStoryChapter
         }
+      });
+      growth.to(roots, { strokeDashoffset: 0, duration: 1, ease: 'none' }, 0);
+      growth.to(stems, { strokeDashoffset: 0, duration: 1.1, ease: 'none' }, .85);
+      growth.to(branches, { strokeDashoffset: 0, duration: 1, ease: 'none' }, 1.8);
+      growth.to(leaves.slice(0, 2), { autoAlpha: 1, scale: 1, duration: .5, ease: 'back.out(1.4)' }, 2.25);
+      growth.to(leaves.slice(2), { autoAlpha: 1, scale: 1, duration: .55, stagger: .12, ease: 'back.out(1.4)' }, 2.65);
 
-        function animate() {
-            currentX += (mouseX - currentX) * 0.1;
-            currentY += (mouseY - currentY) * 0.1;
-            
-            follower.style.transform = `translate(${currentX}px, ${currentY}px)`;
-            requestAnimationFrame(animate);
+      return;
+    }
+
+    if (!('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) updateStage(beats.indexOf(entry.target));
+      });
+    }, { threshold: .55 });
+    beats.forEach((beat) => observer.observe(beat));
+  }
+
+  function initGrowthIllustrations() {
+    const scenes = [...document.querySelectorAll('.about-illustration, .vision-visual')];
+    if (!scenes.length) return;
+
+    if (prefersReducedMotion.matches) scenes.forEach((scene) => scene.classList.add('is-grown'));
+    else {
+      let revealQueued = false;
+      const revealScenesInView = () => {
+        revealQueued = false;
+        scenes.forEach((scene) => {
+          if (scene.classList.contains('is-grown')) return;
+          const bounds = scene.getBoundingClientRect();
+          if (bounds.top < window.innerHeight * .86 && bounds.bottom > window.innerHeight * .12) {
+            scene.classList.add('is-grown');
+          }
+        });
+      };
+      const queueRevealCheck = () => {
+        if (revealQueued) return;
+        revealQueued = true;
+        requestAnimationFrame(revealScenesInView);
+      };
+      window.addEventListener('scroll', queueRevealCheck, { passive: true });
+      window.addEventListener('resize', queueRevealCheck, { passive: true });
+      revealScenesInView();
+    }
+
+    if (prefersReducedMotion.matches || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+    scenes.forEach((scene) => {
+      scene.addEventListener('pointermove', (event) => {
+        const bounds = scene.getBoundingClientRect();
+        const x = (event.clientX - bounds.left) / bounds.width - .5;
+        const y = (event.clientY - bounds.top) / bounds.height - .5;
+        scene.style.setProperty('--scene-tilt-x', `${x * 5}deg`);
+        scene.style.setProperty('--scene-tilt-y', `${y * -5}deg`);
+        if (scene.classList.contains('vision-visual')) {
+  scene.style.setProperty('--canopy-float', `${y * -10}px`);
+  scene.style.setProperty('--canopy-shift-x', `${x * 8}px`);
+}
+      });
+      scene.addEventListener('pointerleave', () => {
+        scene.style.setProperty('--scene-tilt-x', '0deg');
+        scene.style.setProperty('--scene-tilt-y', '0deg');
+        scene.style.setProperty('--canopy-float', '0px');
+    scene.style.setProperty('--canopy-shift-x', '0px');
+      });
+    });
+  }
+
+  function initRevealsAndCounters() {
+    const animated = [...document.querySelectorAll('[data-aos]')];
+    const sections = [...document.querySelectorAll('.section')];
+    if (!prefersReducedMotion.matches) document.body.classList.add('reveal-ready');
+
+    if (!('IntersectionObserver' in window)) {
+      animated.forEach((element) => element.classList.add('aos-animate'));
+      sections.forEach((section) => section.classList.add('section-visible'));
+      return;
+    }
+
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('aos-animate');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -5% 0px' });
+
+    animated.forEach((element) => revealObserver.observe(element));
+
+    const sectionObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('section-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.04 });
+    sections.forEach((section) => sectionObserver.observe(section));
+
+    const counterObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        const element = entry.target;
+        const target = Number(element.dataset.target ?? element.dataset.count);
+        if (!Number.isFinite(target)) return;
+        if (prefersReducedMotion.matches) {
+          element.textContent = formatNumber(target);
+          return;
         }
-
-        animate();
-
-        // Add active state on hoverable elements
-        document.querySelectorAll('a, button, .btn, .nav-link, .focus-card, .approach-card, .mission-card, .team-card, .join-card').forEach(el => {
-            el.addEventListener('mouseenter', () => follower.classList.add('active'));
-            el.addEventListener('mouseleave', () => follower.classList.remove('active'));
-        });
-    }
-};
-
-// ============================================
-// HERO PARTICLES
-// ============================================
-const heroParticles = {
-    init() {
-        const container = document.getElementById('heroParticles');
-        if (!container) return;
-
-        for (let i = 0; i < 50; i++) {
-            const particle = document.createElement('div');
-            const size = Math.random() * 4 + 2;
-            particle.style.cssText = `
-                position: absolute;
-                width: ${size}px;
-                height: ${size}px;
-                background: rgba(255, 255, 255, ${Math.random() * 0.5 + 0.1});
-                border-radius: 50%;
-                left: ${Math.random() * 100}%;
-                top: ${Math.random() * 100}%;
-                pointer-events: none;
-                animation: floatParticle ${Math.random() * 10 + 8}s ease-in-out infinite;
-                animation-delay: ${Math.random() * 5}s;
-            `;
-            container.appendChild(particle);
-        }
-
-        // Add keyframes dynamically
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes floatParticle {
-                0%, 100% { transform: translate(0, 0) scale(1); opacity: ${Math.random() * 0.5 + 0.1}; }
-                25% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * -50 - 20}px) scale(1.2); }
-                50% { transform: translate(${Math.random() * -80 + 40}px, ${Math.random() * -80 - 30}px) scale(0.8); }
-                75% { transform: translate(${Math.random() * 60 - 30}px, ${Math.random() * -40 - 10}px) scale(1.1); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-};
-
-// ============================================
-// FLOATING LEAVES
-// ============================================
-const floatingLeaves = {
-    init() {
-        const container = document.getElementById('floatingLeaves');
-        if (!container) return;
-
-        const leafColors = ['#0B6E4F', '#2E8B57', '#3DAF6E', '#F59E0B', '#D97706'];
-        const leafShapes = [
-            'M0,0 Q15,-10 30,0 Q15,10 0,0',
-            'M0,0 Q10,-15 20,0 Q10,10 0,0',
-            'M0,0 Q20,-8 35,0 Q20,8 0,0'
-        ];
-
-        for (let i = 0; i < 12; i++) {
-            const leaf = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            
-            const size = Math.random() * 20 + 15;
-            const color = leafColors[Math.floor(Math.random() * leafColors.length)];
-            const shape = leafShapes[Math.floor(Math.random() * leafShapes.length)];
-            const startLeft = Math.random() * 100;
-            const startDelay = Math.random() * 10;
-            const duration = Math.random() * 15 + 20;
-
-            path.setAttribute('d', shape);
-            path.setAttribute('fill', color);
-            path.setAttribute('opacity', '0.3');
-
-            leaf.setAttribute('viewBox', '0 0 35 15');
-            leaf.setAttribute('width', size);
-            leaf.setAttribute('height', size * 0.5);
-            leaf.style.cssText = `
-                position: absolute;
-                left: ${startLeft}%;
-                top: -50px;
-                pointer-events: none;
-                animation: leafFall${i} ${duration}s ease-in-out infinite;
-                animation-delay: ${startDelay}s;
-                transform: rotate(${Math.random() * 360}deg);
-            `;
-            leaf.appendChild(path);
-            container.appendChild(leaf);
-
-            // Dynamic keyframes for each leaf
-            const keyframes = `
-                @keyframes leafFall${i} {
-                    0% { transform: translateY(-50px) rotate(0deg) scale(1); opacity: 0; }
-                    10% { opacity: 0.6; }
-                    90% { opacity: 0.6; }
-                    100% { transform: translateY(110vh) rotate(${Math.random() * 720 - 360}deg) scale(0.6); opacity: 0; }
-                }
-            `;
-            const style = document.createElement('style');
-            style.textContent = keyframes;
-            document.head.appendChild(style);
-        }
-    }
-};
-
-// ============================================
-// SCROLL PROGRESS BAR
-// ============================================
-const scrollProgressBar = {
-    init() {
-        const progressBar = document.getElementById('scrollProgress');
-        
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const progress = (scrollTop / docHeight) * 100;
-            progressBar.style.width = progress + '%';
-        });
-    }
-};
-
-// ============================================
-// BACK TO TOP BUTTON
-// ============================================
-const backToTop = {
-    init() {
-        const btn = document.getElementById('backToTop');
-        
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 500) {
-                btn.classList.add('visible');
-            } else {
-                btn.classList.remove('visible');
-            }
-        });
-
-        btn.addEventListener('click', () => {
-            smoothScroll.lenis.scrollTo(0, { duration: 1.5 });
-        });
-    }
-};
-
-// ============================================
-// THEME TOGGLE (Dark/Light Mode)
-// ============================================
-const themeToggle = {
-    init() {
-        const toggle = document.getElementById('themeToggle');
-        if (!toggle) return; // Guard: theme toggle not present in DOM
-        const html = document.documentElement;
-        const sunIcon = toggle.querySelector('.sun-icon');
-        const moonIcon = toggle.querySelector('.moon-icon');
-
-        // Check saved preference
-        const savedTheme = localStorage.getItem('guthli-theme');
-        if (savedTheme) {
-            html.setAttribute('data-theme', savedTheme);
-            if (savedTheme === 'dark') {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            }
-        }
-
-        toggle.addEventListener('click', () => {
-            const current = html.getAttribute('data-theme');
-            const newTheme = current === 'dark' ? 'light' : 'dark';
-            
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('guthli-theme', newTheme);
-
-            // Animate icon swap
-            if (newTheme === 'dark') {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            } else {
-                sunIcon.style.display = 'block';
-                moonIcon.style.display = 'none';
-            }
-        });
-    }
-};
-
-// ============================================
-// AOS (Animate on Scroll) INIT
-// ============================================
-const aosInit = {
-    init() {
-        AOS.init({
-            duration: 800,
-            once: true,
-            mirror: false,
-            offset: 100,
-            easing: 'ease-out-cubic'
-        });
-    }
-};
-
-// ============================================
-// GSAP SCROLL ANIMATIONS
-// ============================================
-const gsapAnimations = {
-    init() {
-        this.animateImpactCounters();
-        this.animateAboutStats();
-        this.animateTimelineItems();
-        this.animateWorkflowSteps();
-        this.animateValueCards();
-    },
-
-    animateImpactCounters() {
-        const counters = document.querySelectorAll('.counter-number');
-        
-        counters.forEach(counter => {
-            const target = parseInt(counter.dataset.target);
-            
-            ScrollTrigger.create({
-                trigger: counter,
-                start: 'top 80%',
-                onEnter: () => {
-                    this.animateCounter(counter, target);
-                },
-                once: true
-            });
-        });
-    },
-
-    animateCounter(element, target) {
-        let current = 0;
-        const increment = Math.ceil(target / 60);
-        const duration = 2000;
-        const stepTime = duration / (target / increment);
-
-        const updateCounter = () => {
-            current += increment;
-            if (current >= target) {
-                current = target;
-                element.textContent = current.toLocaleString();
-                return;
-            }
-            element.textContent = current.toLocaleString();
-            setTimeout(updateCounter, stepTime);
+        const startedAt = performance.now();
+        const duration = 1150;
+        const step = (now) => {
+          const progress = Math.min((now - startedAt) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          element.textContent = formatNumber(target * eased);
+          if (progress < 1) requestAnimationFrame(step);
         };
+        requestAnimationFrame(step);
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.counter-number, .about-stat .stat-number').forEach((element) => counterObserver.observe(element));
+  }
 
-        updateCounter();
-    },
-
-    animateAboutStats() {
-        const statNumbers = document.querySelectorAll('.about-stat .stat-number');
-        
-        statNumbers.forEach(stat => {
-            const target = parseInt(stat.dataset.count);
-            
-            ScrollTrigger.create({
-                trigger: stat,
-                start: 'top 80%',
-                onEnter: () => {
-                    this.animateCounter(stat, target);
-                },
-                once: true
-            });
-        });
-    },
-
-    animateTimelineItems() {
-        gsap.utils.toArray('.timeline-item').forEach((item, i) => {
-            gsap.from(item, {
-                scrollTrigger: {
-                    trigger: item,
-                    start: 'top 85%',
-                    toggleActions: 'play none none reverse'
-                },
-                x: i % 2 === 0 ? -60 : 60,
-                opacity: 0,
-                duration: 1,
-                ease: 'power3.out'
-            });
-        });
-    },
-
-    animateWorkflowSteps() {
-        gsap.utils.toArray('.workflow-step').forEach((step, i) => {
-            gsap.from(step, {
-                scrollTrigger: {
-                    trigger: step,
-                    start: 'top 85%',
-                    toggleActions: 'play none none reverse'
-                },
-                y: 40,
-                opacity: 0,
-                duration: 0.6,
-                delay: i * 0.15,
-                ease: 'power3.out'
-            });
-        });
-    },
-
-    animateValueCards() {
-        gsap.utils.toArray('.value-card').forEach((card, i) => {
-            gsap.from(card, {
-                scrollTrigger: {
-                    trigger: card,
-                    start: 'top 85%',
-                    toggleActions: 'play none none reverse'
-                },
-                scale: 0.6,
-                opacity: 0,
-                duration: 0.8,
-                delay: i * 0.08,
-                ease: 'back.out(1.7)'
-            });
-        });
+  function showFeedback(form, message, state = 'success') {
+    let feedback = form.querySelector('.form-feedback');
+    if (!feedback) {
+      feedback = document.createElement('p');
+      feedback.className = 'form-feedback';
+      feedback.setAttribute('aria-live', 'polite');
+      form.append(feedback);
     }
-};
+    feedback.dataset.state = state;
+    feedback.textContent = message;
+  }
 
-// ============================================
-// CTA PARTICLES
-// ============================================
-const ctaParticles = {
-    init() {
-        const container = document.getElementById('ctaParticles');
-        if (!container) return;
+  function initModals() {
+    const settings = [
+      {
+        modalId: 'applyModal', formId: 'applyForm', closeId: 'modalClose',
+        publicKey: '5ATVd4xHeSdttqrIw', serviceId: 'service_2tfcpgi', templateId: 'template_vrt6ibc',
+        trigger: '.apply-btn, .apply-cta-btn, .btn-primary[data-open-modal], .cta .btn-primary',
+        fields: ['appName', 'appEmail', 'appPhone', 'appRole', 'appMessage'],
+        getParams: (fields) => ({
+          name: fields[0], email: fields[1], phone: fields[2], application_type: fields[3],
+          time: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+          message: fields[4], recipient: 'guthlifoundation2026@gmail.com'
+        }),
+        busy: 'Sending application…', success: 'Application sent. Thank you for reaching out.',
+        titleField: 'appRole'
+      },
+      {
+        modalId: 'eventModal', formId: 'eventForm', closeId: 'eventModalClose',
+        publicKey: '5ATVd4xHeSdttqrIw', serviceId: 'service_2tfcpgi', templateId: 'template_nw8sg54',
+        trigger: '.event-register',
+        fields: ['evtName', 'evtEmail', 'evtPhone', 'evtSelect', 'evtCount', 'evtMessage'],
+        getParams: (fields) => ({
+          name: fields[0], email: fields[1], phone: fields[2], event: fields[3], count: fields[4] || '1',
+          message: fields[5], recipient: 'guthlifoundation2026@gmail.com'
+        }),
+        busy: 'Sending registration…', success: 'Registration received. Thank you.',
+        titleField: 'evtSelect'
+      }
+    ];
 
-        for (let i = 0; i < 30; i++) {
-            const particle = document.createElement('div');
-            const size = Math.random() * 6 + 3;
-            const colors = ['rgba(255,215,0,', 'rgba(255,255,255,', 'rgba(46,139,87,'];
-            const color = colors[Math.floor(Math.random() * colors.length)];
+    let activeDialog = null;
+    let returnFocus = null;
+    let emailInitialized = false;
 
-            particle.style.cssText = `
-                position: absolute;
-                width: ${size}px;
-                height: ${size}px;
-                background: ${color}${Math.random() * 0.3 + 0.1})};
-                border-radius: 50%;
-                left: ${Math.random() * 100}%;
-                top: ${Math.random() * 100}%;
-                pointer-events: none;
-                animation: ctaFloatParticle ${Math.random() * 8 + 6}s ease-in-out infinite;
-                animation-delay: ${Math.random() * 5}s;
-            `;
-            container.appendChild(particle);
+    const closeDialog = () => {
+      if (!activeDialog) return;
+      activeDialog.modal.classList.remove('active');
+      activeDialog.modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      if (activeDialog.button) activeDialog.button.focus();
+      else returnFocus?.focus();
+      activeDialog = null;
+    };
+
+    settings.forEach((config) => {
+      const modal = document.getElementById(config.modalId);
+      const form = document.getElementById(config.formId);
+      const close = document.getElementById(config.closeId);
+      if (!modal || !form || !close) return;
+
+      const openDialog = (trigger) => {
+        returnFocus = trigger;
+        activeDialog = { modal, button: trigger };
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+
+        const select = document.getElementById(config.titleField);
+        if (select && trigger) {
+          const cardTitle = trigger.closest('.job-card')?.querySelector('.job-title')?.textContent.trim();
+          const eventTitle = trigger.closest('.event-card')?.querySelector('.event-title')?.textContent.trim();
+          const candidate = cardTitle || eventTitle;
+          const matchingOption = [...select.options].find((option) => option.value === candidate);
+          if (matchingOption) select.value = matchingOption.value;
         }
+        window.setTimeout(() => document.getElementById(config.fields[0])?.focus(), 40);
+      };
 
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ctaFloatParticle {
-                0%, 100% { transform: translateY(0) scale(1); opacity: 0.1; }
-                50% { transform: translateY(-30px) scale(1.3); opacity: 0.5; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-};
+      document.querySelectorAll(config.trigger).forEach((trigger) => trigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        openDialog(trigger);
+      }));
+      close.addEventListener('click', closeDialog);
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeDialog();
+      });
 
-// ============================================
-// NEWSLETTER FORM
-// ============================================
-const newsletterForm = {
-    init() {
-        const form = document.getElementById('newsletterForm');
-        
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = form.querySelector('input[type="email"]').value;
-            
-            // Animate submission
-            const btn = form.querySelector('.btn-subscribe');
-            const originalText = btn.textContent;
-            btn.textContent = '✓ Subscribed!';
-            btn.style.background = 'linear-gradient(135deg, #2E8B57, #0B6E4F)';
-            
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.background = '';
-                form.querySelector('input[type="email"]').value = '';
-            }, 3000);
-
-            // Here you would typically send this to your backend
-            console.log('Newsletter subscription:', email);
-        });
-    }
-};
-
-// ============================================
-// RIPPLE EFFECT ON BUTTONS
-// ============================================
-const rippleEffect = {
-    init() {
-        document.querySelectorAll('.btn, .nav-donate-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                const rect = this.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const ripple = document.createElement('span');
-                ripple.style.cssText = `
-                    position: absolute;
-                    width: 0;
-                    height: 0;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.4);
-                    transform: translate(-50%, -50%);
-                    pointer-events: none;
-                    left: ${x}px;
-                    top: ${y}px;
-                    animation: rippleAnim 0.6s ease-out forwards;
-                `;
-                
-                this.style.position = 'relative';
-                this.style.overflow = 'hidden';
-                this.appendChild(ripple);
-                
-                setTimeout(() => ripple.remove(), 600);
-            });
-        });
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes rippleAnim {
-                0% { width: 0; height: 0; opacity: 0.5; }
-                100% { width: 300px; height: 300px; opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-};
-
-// ============================================
-// IMAGE TILT EFFECT
-// ============================================
-const tiltEffect = {
-    init() {
-        const interactiveTargets = document.querySelectorAll('.about-illustration, .vision-visual, .mission-card, .focus-card, .team-card, .event-card, .job-card, .join-card, .approach-card-inner');
-
-        interactiveTargets.forEach(el => {
-            el.addEventListener('mousemove', (e) => {
-                const rect = el.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const rotateX = (y - centerY) / centerY * -8;
-                const rotateY = (x - centerX) / centerX * 8;
-                const glowX = (x / rect.width) * 100;
-                const glowY = (y / rect.height) * 100;
-
-                el.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
-                el.style.setProperty('--pointer-x', `${glowX}%`);
-                el.style.setProperty('--pointer-y', `${glowY}%`);
-            });
-
-            el.addEventListener('mouseleave', () => {
-                el.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0)';
-                el.style.transition = 'transform 0.5s ease';
-                el.style.setProperty('--pointer-x', '50%');
-                el.style.setProperty('--pointer-y', '50%');
-            });
-
-            el.addEventListener('mouseenter', () => {
-                el.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
-            });
-        });
-    }
-};
-
-// ============================================
-// INTERSECTION OBSERVER FOR LAZY SECTIONS
-// ============================================
-const sectionObserver = {
-    init() {
-        const sections = document.querySelectorAll('.section');
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('section-visible');
-                }
-            });
-        }, { threshold: 0.1 });
-
-        sections.forEach(section => observer.observe(section));
-    }
-};
-
-// ============================================
-// SMOOTH NAV LINK SCROLL
-// ============================================
-const smoothNavScroll = {
-    init() {
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = anchor.getAttribute('href');
-                if (targetId === '#') return;
-                
-                const target = document.querySelector(targetId);
-                if (target && smoothScroll.lenis) {
-                    smoothScroll.lenis.scrollTo(target, {
-                        offset: -70,
-                        duration: 1.2
-                    });
-                }
-            });
-        });
-    }
-};
-
-// ============================================
-// PERFORMANCE OPTIMIZATIONS
-// ============================================
-const performance = {
-    init() {
-        // Deactivate animations on devices with prefers-reduced-motion
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            return;
-        }
-
-        // Debounce scroll events
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
-    }
-};
-
-// ============================================
-// MOBILE DETECTION & ADAPTATION
-// ============================================
-const mobileAdaptation = {
-    init() {
-        if ('ontouchstart' in window) {
-            document.querySelectorAll('.team-card, .focus-card, .approach-card, .mission-card, .join-card').forEach(card => {
-                card.addEventListener('touchstart', function() {
-                    this.style.transform = 'translateY(-8px)';
-                });
-                card.addEventListener('touchend', function() {
-                    this.style.transform = 'translateY(0)';
-                });
-            });
-        }
-    }
-};
-
-// ============================================
-// INDEPENDENCE DAY BANNER
-// ============================================
-const independenceBanner = {
-    init() {
-        const closeBtn = document.getElementById('bannerClose');
-        const banner = document.querySelector('.independence-banner');
-        if (!closeBtn || !banner) return;
-
-        // Apply banner offset so the fixed navbar sits below it
-        const applyOffset = () => {
-            const height = banner.offsetHeight || 46;
-            document.documentElement.style.setProperty('--banner-height', height + 'px');
-            document.body.classList.add('banner-visible');
-        };
-
-        closeBtn.addEventListener('click', () => {
-            banner.style.display = 'none';
-            document.body.classList.remove('banner-visible');
-            document.documentElement.style.setProperty('--banner-height', '0px');
-        });
-
-        // Apply after layout is ready
-        if (document.readyState === 'complete') {
-            applyOffset();
-        } else {
-            window.addEventListener('load', applyOffset);
-        }
-    }
-};
-
-// ============================================
-// VOLUNTEER / APPLY MODAL
-// ============================================
-const applyModal = {
-    // ----------------------------------------------------
-    // EmailJS Configuration  (VOLUNTEER / APPLY FORM)
-    // service_2tfcpgi   -> Service ID
-    // template_vrt6ibc  -> Template ID  (for applications)
-    // 5ATVd4xHeSdttqrIw -> Public Key
-    //
-    // IMPORTANT: The application form uses its own dedicated
-    // EmailJS template. In the EmailJS dashboard, the template
-    // used here MUST contain these placeholders so that the
-    // received email shows "Application For" and "Submitted On":
-    //   Subject: New Application from {{name}}
-    //   Body:
-    //     Name          : {{name}}
-    //     Email         : {{email}}
-    //     Phone         : {{phone}}
-    //     Application For: {{application_type}}
-    //     Submitted On  : {{time}}
-    //     Message       : {{message}}
-    //     Reply-To      : {{email}}
-    // ----------------------------------------------------
-    EMAILJS_SERVICE_ID: 'service_2tfcpgi',
-    EMAILJS_TEMPLATE_ID: 'template_vrt6ibc',
-    EMAILJS_PUBLIC_KEY: '5ATVd4xHeSdttqrIw',
-
-    init() {
-        this.modal = document.getElementById('applyModal');
-        this.closeBtn = document.getElementById('modalClose');
-        this.form = document.getElementById('applyForm');
-        if (!this.modal || !this.form) return;
-
-        // Initialize EmailJS with public key
-        emailjs.init(this.EMAILJS_PUBLIC_KEY);
-
-        // Email address to receive applications
-        this.recipientEmail = 'guthlifoundation2026@gmail.com';
-
-// Open modal triggers
-        document.querySelectorAll('.apply-btn, .apply-cta-btn, .btn-primary[data-open-modal]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.open();
-            });
-        });
-
-        // "Become a Volunteer" CTA button
-        const volunteerBtn = document.querySelector('.cta .btn-primary');
-        if (volunteerBtn) {
-            volunteerBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.open();
-            });
-        }
-
-        // Close events
-        this.closeBtn.addEventListener('click', () => this.close());
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.close();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.modal.classList.contains('active')) this.close();
-        });
-
-        // Form submission -> EmailJS
-        this.form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitApplication();
-        });
-    },
-
-    open() {
-        this.modal.classList.add('active');
-        this.modal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        // Pause lenis scroll
-        if (smoothScroll.lenis) smoothScroll.lenis.stop();
-    },
-
-    close() {
-        this.modal.classList.remove('active');
-        this.modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        if (smoothScroll.lenis) smoothScroll.lenis.start();
-    },
-
-    submitApplication() {
-        const name = document.getElementById('appName').value.trim();
-        const email = document.getElementById('appEmail').value.trim();
-        const phone = document.getElementById('appPhone').value.trim();
-        const role = document.getElementById('appRole').value;
-        const message = document.getElementById('appMessage').value.trim();
-
-        // Basic validation
-        if (!name || !email || !phone || !role || !message) {
-            alert('Please fill in all the fields before submitting.');
-            return;
-        }
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const values = config.fields.map((id) => document.getElementById(id)?.value.trim() ?? '');
+        const email = values[1];
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            alert('Please enter a valid email address.');
-            return;
+          document.getElementById(config.fields[1])?.focus();
+          showFeedback(form, 'Please enter a valid email address.', 'error');
+          return;
         }
 
-        // Show "sending" feedback
-        const submitBtn = this.form.querySelector('.modal-submit');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = '⏳ Sending...';
-        submitBtn.disabled = true;
-
-// Template parameters for EmailJS (template_vrt6ibc)
-        // Matches the placeholders used in the EmailJS template:
-        // {{name}}, {{email}}, {{phone}}, {{application_type}}, {{time}}, {{message}}
-        const templateParams = {
-            name: name,
-            email: email,
-            phone: phone,
-            application_type: role, // Role / Position (shown as "Application For")
-            time: new Date().toLocaleString('en-IN', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-}),
-            message: message,
-            recipient: this.recipientEmail
-        };
-
-        // Send via EmailJS
-        emailjs.send(
-            this.EMAILJS_SERVICE_ID,
-            this.EMAILJS_TEMPLATE_ID,
-            templateParams
-        ).then(() => {
-            // Success
-            submitBtn.textContent = '✓ Application Sent!';
-            submitBtn.style.background = 'linear-gradient(135deg, #2E8B57, #0B6E4F)';
-            setTimeout(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.style.background = '';
-                submitBtn.disabled = false;
-                this.form.reset();
-                this.close();
-            }, 1500);
-        }).catch((error) => {
-            // Error
-            console.error('EmailJS error:', error);
-            submitBtn.textContent = '✗ Failed. Please try again.';
-            submitBtn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
-            setTimeout(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.style.background = '';
-                submitBtn.disabled = false;
-            }, 2500);
-        });
-    }
-};
-
-// ============================================
-// EVENT REGISTRATION MODAL
-// ============================================
-const eventModal = {
-    // ----------------------------------------------------
-    // EmailJS Configuration (same account/service)
-    // service_2tfcpgi   -> Service ID
-    // template_nw8sg54  -> Template ID
-    // 5ATVd4xHeSdttqrIw -> Public Key
-    // ----------------------------------------------------
-    EMAILJS_SERVICE_ID: 'service_2tfcpgi',
-    EMAILJS_TEMPLATE_ID: 'template_nw8sg54',
-    EMAILJS_PUBLIC_KEY: '5ATVd4xHeSdttqrIw',
-
-    init() {
-        this.modal = document.getElementById('eventModal');
-        this.closeBtn = document.getElementById('eventModalClose');
-        this.form = document.getElementById('eventForm');
-        if (!this.modal || !this.form) return;
-
-        // Initialize EmailJS with public key
-        emailjs.init(this.EMAILJS_PUBLIC_KEY);
-
-        // Email address to receive event registrations
-        this.recipientEmail = 'guthlifoundation2026@gmail.com';
-
-        // Open modal from "Register for Event →" links
-        document.querySelectorAll('.event-register').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.open();
-            });
-        });
-
-        // Close events
-        this.closeBtn.addEventListener('click', () => this.close());
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.close();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.modal.classList.contains('active')) this.close();
-        });
-
-        // Form submission -> EmailJS
-        this.form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitRegistration();
-        });
-    },
-
-    open() {
-        this.modal.classList.add('active');
-        this.modal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        if (smoothScroll.lenis) smoothScroll.lenis.stop();
-    },
-
-    close() {
-        this.modal.classList.remove('active');
-        this.modal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        if (smoothScroll.lenis) smoothScroll.lenis.start();
-    },
-
-    submitRegistration() {
-        const name = document.getElementById('evtName').value.trim();
-        const email = document.getElementById('evtEmail').value.trim();
-        const phone = document.getElementById('evtPhone').value.trim();
-        const eventName = document.getElementById('evtSelect').value;
-        const count = document.getElementById('evtCount').value || '1';
-        const message = document.getElementById('evtMessage').value.trim();
-
-        // Basic validation
-        if (!name || !email || !phone || !eventName) {
-            alert('Please fill in the required fields before registering.');
-            return;
+        const submit = form.querySelector('[type="submit"]');
+        const originalText = submit?.textContent ?? '';
+        if (submit) {
+          submit.disabled = true;
+          submit.textContent = config.busy;
         }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            alert('Please enter a valid email address.');
-            return;
+        showFeedback(form, config.busy, 'loading');
+
+        try {
+          if (!window.emailjs) throw new Error('Email service did not load. Please try again later.');
+          if (!emailInitialized) {
+            window.emailjs.init(config.publicKey);
+            emailInitialized = true;
+          }
+          await window.emailjs.send(config.serviceId, config.templateId, config.getParams(values));
+          showFeedback(form, config.success);
+          if (submit) submit.textContent = 'Sent';
+          window.setTimeout(() => {
+            form.reset();
+            if (submit) { submit.disabled = false; submit.textContent = originalText; }
+            closeDialog();
+          }, 1100);
+        } catch (error) {
+          console.error('EmailJS submission failed:', error);
+          showFeedback(form, 'We could not send that just now. Please try again.', 'error');
+          if (submit) { submit.disabled = false; submit.textContent = originalText; }
         }
+      });
+    });
 
-        // Show "sending" feedback
-        const submitBtn = this.form.querySelector('.modal-submit');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = '⏳ Registering...';
-        submitBtn.disabled = true;
+    document.addEventListener('keydown', (event) => {
+      if (!activeDialog) return;
+      if (event.key === 'Escape') {
+        closeDialog();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [...activeDialog.modal.querySelectorAll('a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+  }
 
-        // Template parameters for EmailJS
-        const templateParams = {
-            name: name,
-            email: email,
-            phone: phone,
-            event: eventName,
-            count: count,
-            message: message,
-            recipient: this.recipientEmail
-        };
+  function initNewsletter() {
+    const form = document.getElementById('newsletterForm');
+    const status = document.getElementById('newsletterStatus');
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      if (status) {
+        status.textContent = 'Newsletter sign-up is not connected yet. Please contact us by email.';
+        status.dataset.state = 'error';
+      }
+    });
+  }
 
-        // Send via EmailJS
-        emailjs.send(
-            this.EMAILJS_SERVICE_ID,
-            this.EMAILJS_TEMPLATE_ID,
-            templateParams
-        ).then(() => {
-            submitBtn.textContent = '✓ Registration Received!';
-            submitBtn.style.background = 'linear-gradient(135deg, #2E8B57, #0B6E4F)';
-            setTimeout(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.style.background = '';
-                submitBtn.disabled = false;
-                this.form.reset();
-                this.close();
-            }, 1500);
-        }).catch((error) => {
-            console.error('EmailJS error:', error);
-            submitBtn.textContent = '✗ Failed. Please try again.';
-            submitBtn.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
-            setTimeout(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.style.background = '';
-                submitBtn.disabled = false;
-            }, 2500);
-        });
-    }
-};
-
-// ============================================
-// INITIALIZE EVERYTHING
-// ============================================
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize core features
-    performance.init();
-    preloader.init();
-    
-    // Initialize after preloader
-    setTimeout(() => {
-        const run = (fn) => { try { fn && fn(); } catch (e) { console.error('Init error:', e); } };
-
-        run(() => smoothScroll.init());
-        run(() => navigation.init());
-        run(() => independenceBanner.init());
-        run(() => mouseFollower.init());
-        run(() => heroParticles.init());
-        run(() => floatingLeaves.init());
-        run(() => scrollProgressBar.init());
-        run(() => backToTop.init());
-        run(() => themeToggle.init());
-        run(() => aosInit.init());
-        run(() => gsapAnimations.init());
-        run(() => ctaParticles.init());
-        run(() => newsletterForm.init());
-        run(() => rippleEffect.init());
-        run(() => tiltEffect.init());
-        run(() => sectionObserver.init());
-        run(() => smoothNavScroll.init());
-        run(() => mobileAdaptation.init());
-        run(() => applyModal.init());
-        run(() => eventModal.init());
-    }, 100);
-});
-
-// Handle window resize
-window.addEventListener('resize', () => {
-    // Update AOS
-    AOS.refresh();
-    
-    // Update ScrollTrigger
-    ScrollTrigger.refresh();
-});
-
-// ============================================
-// REGISTER GSAP PLUGINS
-// ============================================
-gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
-
-console.log('%c🌱 Guthli Foundation', 'font-size: 24px; font-weight: bold; color: #0B6E4F;');
-console.log('%cEvery Seed Holds the Power of Change', 'font-size: 14px; color: #2E8B57; font-style: italic;');
-console.log('%cMade with ❤️ by DEVTRI', 'font-size: 12px; color: #6B7280;');
+  document.addEventListener('DOMContentLoaded', () => {
+    initLoader();
+    initNavigation();
+    initBanner();
+    initSeedStory();
+    initGrowthIllustrations();
+    initRevealsAndCounters();
+    initModals();
+    initNewsletter();
+  }, { once: true });
+})();
