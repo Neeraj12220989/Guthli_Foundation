@@ -1,24 +1,44 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="diwali">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guthli Foundation | Every Seed Holds the Power of Change</title>
-    <meta name="description" content="Guthli Foundation - Planting seeds of change through education, leadership, innovation, sustainability, and community empowerment.">
+    <title>Happy Diwali | Guthli Foundation – A Day of Kindness</title>
+    <meta name="description" content="This Diwali, Guthli Foundation celebrated kindness at a Gaushala. Read about A Day of Kindness – Gaushala Visit on 8 November 2026.">
     <meta name="keywords" content="NGO, Guthli Foundation, education, sustainability, community, leadership, India">
     <meta name="author" content="Guthli Foundation">
     
     <!-- Open Graph Tags -->
-    <meta property="og:title" content="Guthli Foundation | Every Seed Holds the Power of Change">
-    <meta property="og:description" content="Planting seeds of change through education, leadership, innovation, sustainability, and community empowerment.">
+    <meta property="og:title" content="Happy Diwali | Guthli Foundation Gaushala Visit">
+    <meta property="og:description" content="A Day of Kindness – Gaushala Visit: Guthli Foundation celebrated Diwali with compassion, cattle care and the spirit of giving.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://guthlifoundation.org">
     <meta property="og:image" content="uploads/logos/logo.png">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Event",
+            "name": "A Day of Kindness – Gaushala Visit",
+            "startDate": "2026-11-08",
+            "eventStatus": "https://schema.org/EventCompleted",
+            "description": "On 8 November 2026, the Guthli Foundation team visited a Gaushala to celebrate Diwali with kindness and compassion. They fed and cared for cattle and made a monetary contribution towards their well-being and daily care.",
+            "organizer": {
+                "@type": "Organization",
+                "name": "Guthli Foundation",
+                "url": "https://guthlifoundation.org"
+            },
+            "image": [
+                "https://guthlifoundation.org/uploads/images/Gaushala_8_Nov/1.jpeg",
+                "https://guthlifoundation.org/uploads/images/Gaushala_8_Nov/2.jpeg",
+                "https://guthlifoundation.org/uploads/images/Gaushala_8_Nov/3.jpeg"
+            ]
+        }
+    </script>
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Guthli Foundation | Every Seed Holds the Power of Change">
-    <meta name="twitter:description" content="Planting seeds of change through education, leadership, innovation, sustainability, and community empowerment.">
+    <meta name="twitter:title" content="Happy Diwali | Guthli Foundation Gaushala Visit">
+    <meta name="twitter:description" content="A Day of Kindness – Gaushala Visit: Guthli Foundation celebrated Diwali with compassion, cattle care and the spirit of giving.">
     <meta name="twitter:image" content="uploads/logos/logo.png">
     
     <!-- Favicon -->
@@ -29,8 +49,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
+    <link rel="stylesheet" href="redesign.css?v=diwali-polish-12">
+    <!-- GSAP animation library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 </head>
 <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -75,11 +101,11 @@
         <span class="activity-banner-mark" aria-hidden="true">✳</span>
 
         <p class="banner-text">
-            <strong>RECENTLY IN THE FIELD</strong>
-            <span class="banner-date">Plantation Drive · 18 October 2026</span>
+            <strong>DIWALI IN THE FIELD</strong>
+            <span class="banner-date">Gaushala Visit · 8 November 2026</span>
         </p>
 
-        <a href="#gallery" class="banner-event-btn">See the photos →</a>
+        <a href="#gaushala-event" class="banner-event-btn">See the celebration →</a>
 
         <button class="banner-close" id="bannerClose" type="button" aria-label="Close activity banner">&times;</button>
     </div>
@@ -188,6 +214,23 @@
             <div class="scroll-line">
                 <div class="scroll-dot"></div>
             </div>
+        </div>
+    </section>
+
+    <section class="diwali-hero" aria-labelledby="diwaliHeroTitle">
+        <div class="diwali-lights" aria-hidden="true">
+            <span class="diya diya-one">🪔</span>
+            <span class="diya diya-two">🪔</span>
+            <span class="diwali-glow"></span>
+            <span class="diwali-petal petal-one">✿</span>
+            <span class="diwali-petal petal-two">✿</span>
+        </div>
+        <div class="diwali-hero-content container">
+            <p class="diwali-eyebrow">A celebration of kindness · 8 November 2026</p>
+            <h2 id="diwaliHeroTitle">Happy Diwali from Guthli Foundation! 🪔</h2>
+            <p class="diwali-hero-lede">This Diwali, we chose to spread happiness beyond ourselves.</p>
+            <p class="diwali-hero-copy">This Diwali, we chose to celebrate beyond ourselves. Through our visit to the Gaushala, feeding cattle and contributing towards their well-being, we shared the true spirit of the festival – kindness, care and giving.</p>
+            <a class="diwali-cta" href="#gaushala-event">Explore Our Diwali Celebration <span aria-hidden="true">→</span></a>
         </div>
     </section>
 
@@ -879,7 +922,7 @@
             <span>🌿 Tree plantation</span>
         </div>
 
-        <a href="#gallery" class="event-register">
+        <a href="#gallery" class="event-gallery-link">
             View plantation photos →
         </a>
 
@@ -899,10 +942,92 @@
                             <span>💻 Online / Virtual</span>
                             <span>🎙️ Q&A Included</span>
                         </div>
-                        <a href="#" class="event-register">Registeration Closed →</a>
+                        <span class="event-closed">Registration closed</span>
                     </div>
                 </div>
 
+                <article class="event-card gaushala-event-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="event-ribbon">Diwali 2026</div>
+                    <div class="event-date">
+                        <time class="event-day" datetime="2026-11-08">08</time>
+                        <span class="event-month">November 2026</span>
+                    </div>
+                    <div class="event-body">
+                        <span class="event-tag">🪔 Kindness & Animal Welfare</span>
+                        <h3 class="event-title">A Day of Kindness – Gaushala Visit</h3>
+                        <p class="event-desc">On 8 November 2026, the Guthli Foundation team visited a Gaushala, fed and cared for cattle, and contributed towards their well-being and daily care in celebration of Diwali.</p>
+                        <div class="event-meta">
+                            <span>📅 8 November 2026</span>
+                            <span>🤝 Organized by Guthli Foundation</span>
+                        </div>
+                        <a href="#gaushala-event" class="event-gallery-link">Explore the celebration →</a>
+                    </div>
+                </article>
+
+                <article class="event-card chhath-event-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="event-ribbon">Upcoming</div>
+                    <div class="event-date">
+                        <time class="event-day" datetime="2026-11-17">17</time>
+                        <span class="event-month">November 2026</span>
+                    </div>
+                    <div class="event-body">
+                        <span class="event-tag">☀️ Chhath Week · Community Care</span>
+                        <h3 class="event-title">Chhath Week Distribution Drive for Kids</h3>
+                        <p class="event-desc">Join Guthli Foundation for a community distribution drive for children during Chhath week. Register your interest and our team will follow up with event details.</p>
+                        <div class="event-meta">
+                            <span>📅 17 November 2026</span>
+                            <span>🤝 Organized by Guthli Foundation</span>
+                        </div>
+                        <button class="event-register-button" type="button" data-register-event aria-haspopup="dialog" aria-controls="eventModal">
+                            Register for this event <span aria-hidden="true">→</span>
+                        </button>
+                    </div>
+                </article>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="diwali-highlight section" id="gaushala-event" aria-labelledby="diwaliHighlightTitle">
+        <div class="container">
+            <div class="diwali-highlight-heading">
+                <p class="diwali-eyebrow">A day of kindness · 8 November 2026</p>
+                <h2 id="diwaliHighlightTitle" tabindex="-1">THIS IS HOW WE CELEBRATED DIWALI</h2>
+                <p class="diwali-highlight-message">A little kindness, a little care, and a lot of happiness.</p>
+            </div>
+            <div class="gaushala-story">
+                <div class="gaushala-story-copy">
+                    <p>Festivals are not just about lights, sweets and celebrations. They are also about kindness, compassion and sharing happiness with others.</p>
+                    <p>On 8 November 2026, the Guthli Foundation team visited a Gaushala to celebrate Diwali in a meaningful way.</p>
+                    <p>We spent time feeding the cattle and caring for them. We also made a monetary contribution towards their well-being and daily care.</p>
+                    <p>It was a small gesture, but one that reminded us that the true spirit of Diwali lies in spreading light, showing compassion and making a positive difference in the lives of others.</p>
+                    <p>This is how we celebrated Diwali – with kindness, gratitude and the joy of giving.</p>
+                    <p class="gaushala-closing">Because the brightest celebrations are the ones that bring happiness to others. <span aria-hidden="true">❤️</span></p>
+                </div>
+                <div class="gaushala-activity-summary">
+                    <h3>Our acts of care</h3>
+                    <ul class="gaushala-activities">
+                        <li>Visited a local Gaushala.</li>
+                        <li>Fed and cared for cattle.</li>
+                        <li>Donated an amount towards cattle welfare.</li>
+                        <li>Celebrated Diwali through compassion and social responsibility.</li>
+                    </ul>
+                </div>
+                <div class="gaushala-gallery" role="group" aria-label="Photographs from the Guthli Foundation Gaushala visit">
+                    <button class="gaushala-photo" type="button" data-lightbox-src="uploads/images/Gaushala_8_Nov/1.jpeg" data-lightbox-alt="Guthli Foundation presenting a donation towards cattle care">
+                        <img src="uploads/images/Gaushala_8_Nov/1.jpeg" alt="Guthli Foundation presenting a donation towards cattle care" loading="lazy" decoding="async">
+                        <span>Contributing towards their care</span>
+                    </button>
+                    <button class="gaushala-photo" type="button" data-lightbox-src="uploads/images/Gaushala_8_Nov/2.jpeg" data-lightbox-alt="A moment from the Guthli Foundation team's Diwali visit to the Gaushala">
+                        <img src="uploads/images/Gaushala_8_Nov/2.jpeg" alt="A Guthli Foundation volunteer feeding a cow at the Gaushala" loading="lazy" decoding="async">
+                        <span>Feeding cattle with care</span>
+                    </button>
+                    <button class="gaushala-photo" type="button" data-lightbox-src="uploads/images/Gaushala_8_Nov/3.jpeg" data-lightbox-alt="Guthli Foundation's Gaushala visit, celebrating Diwali through compassion">
+                        <img src="uploads/images/Gaushala_8_Nov/3.jpeg" alt="Guthli Foundation volunteers caring for cattle at the Gaushala" loading="lazy" decoding="async">
+                        <span>Compassion in action</span>
+                    </button>
+                </div>
+                <p class="gaushala-gallery-caption">Celebrating the festival of lights by sharing love, feeding cattle and contributing towards their care.</p>
             </div>
         </div>
     </section>
@@ -1198,8 +1323,113 @@
                 </div>
             </div>
 
-            <div class="team-group" data-aos="fade-up">
-                <h3 class="team-group-title">Core Team</h3>
+            <div class="team-group team-group--core">
+                <!-- CORE TEAM: STORY INTRO -->
+<div class="core-team-story" aria-labelledby="coreTeamStoryTitle">
+
+    <div class="core-team-story__topline">
+        <span class="core-team-story__eyebrow">
+            <span class="core-team-story__seed" aria-hidden="true"></span>
+            CORE TEAM · THE BEGINNING
+        </span>
+        <span class="core-team-story__index">
+            PURPOSE / PEOPLE / ACTION
+        </span>
+    </div>
+
+    <div class="core-team-story__layout">
+
+        <!-- Main story -->
+        <div class="core-team-story__lead">
+
+            <p class="core-team-story__overline">
+                Every movement has a beginning.
+            </p>
+
+            <h3 class="core-team-story__title" id="coreTeamStoryTitle">
+                <span class="core-team-story__title-line">
+                    Change begins
+                </span>
+                <span class="core-team-story__title-line core-team-story__title-line--accent">
+                    when people
+                </span>
+                <span class="core-team-story__title-line">
+                    show up.
+                </span>
+            </h3>
+
+            <p class="core-team-story__description">
+                At Guthli Foundation, change starts with people who
+                choose to turn purpose into action. Our Core Team helps
+                lay the groundwork—connecting shared beliefs with the
+                ideas, work and care that help communities grow.
+            </p>
+
+            <p class="core-team-story__footnote">
+                <span aria-hidden="true">✳</span>
+                Small beginnings. Lasting impact.
+            </p>
+
+        </div>
+
+        <!-- The three chapters -->
+        <div class="core-team-story__chapters"
+             aria-label="The story behind the Core Team">
+
+            <article class="core-team-chapter">
+
+                <span class="core-team-chapter__number">
+                    CHAPTER 01
+                </span>
+
+                <div class="core-team-chapter__content">
+                    <h4>The spark</h4>
+                    <p>
+                        A belief that knowledge, opportunity and support
+                        can open new paths.
+                    </p>
+                </div>
+
+            </article>
+
+            <article class="core-team-chapter">
+
+                <span class="core-team-chapter__number">
+                    CHAPTER 02
+                </span>
+
+                <div class="core-team-chapter__content">
+                    <h4>The work</h4>
+                    <p>
+                        Turning ideas into action through education,
+                        innovation, sustainability and community initiatives.
+                    </p>
+                </div>
+
+            </article>
+
+            <article class="core-team-chapter">
+
+                <span class="core-team-chapter__number">
+                    CHAPTER 03
+                </span>
+
+                <div class="core-team-chapter__content">
+                    <h4>The growth</h4>
+                    <p>
+                        Building beyond one moment towards self-reliance
+                        and lasting social change.
+                    </p>
+                </div>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</div>
+<!-- END CORE TEAM STORY -->
                 <div class="team-grid">
                     <div class="team-card glass-card" data-aos="flip-up" data-aos-delay="100">
                         <div class="team-img">
@@ -1599,6 +1829,7 @@
             </div>
         </div>
         <div class="footer-bottom">
+            <p class="footer-diwali-greeting">Wishing everyone a Happy &amp; Joyful Diwali – Team Guthli Foundation 🪔</p>
             <div class="container">
                 <p>&copy; 2026 Guthli Foundation. All Rights Reserved.</p>
                 <p>Made with ❤️ by <strong>DEVTRI</strong></p>
@@ -1677,6 +1908,8 @@
                         <option value="">Select an event</option>
                         <option value="Interactive Session with ISRO Ex-Intern">Interactive Session with ISRO Ex-Intern (Online)</option>
                         <option value="Plantation Drive">Plantation Drive — 18 October 2026 (Completed)</option>
+                        <option value="A Day of Kindness – Gaushala Visit">A Day of Kindness – Gaushala Visit — 8 November 2026 (Completed)</option>
+                        <option value="Chhath Week Distribution Drive for Kids">Chhath Week Distribution Drive for Kids — 17 November 2026 (Upcoming)</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
@@ -1694,6 +1927,12 @@
         </div>
     </div>
 
+    <dialog class="diwali-lightbox" id="diwaliLightbox" aria-label="Gaushala visit photo">
+        <button class="diwali-lightbox-close" type="button" aria-label="Close photo">&times;</button>
+        <img class="diwali-lightbox-image" alt="">
+        <p class="diwali-lightbox-caption" aria-live="polite"></p>
+    </dialog>
+
     <!-- Scroll storytelling -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
@@ -1701,8 +1940,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="app.js"></script>
+    <script src="app.js?v=diwali-polish-9"></script>
 
 </body>
 </html>
-
