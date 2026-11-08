@@ -105,6 +105,78 @@ function initLoader() {
     close?.addEventListener('click', () => banner?.remove());
   }
 
+  function initDiwaliLightbox() {
+    const lightbox = document.getElementById('diwaliLightbox');
+    const image = lightbox?.querySelector('.diwali-lightbox-image');
+    const caption = lightbox?.querySelector('.diwali-lightbox-caption');
+    const close = lightbox?.querySelector('.diwali-lightbox-close');
+    if (!(lightbox instanceof HTMLDialogElement) || !image || !caption || !close) return;
+
+    document.querySelectorAll('[data-lightbox-src]').forEach((trigger) => {
+      trigger.addEventListener('click', () => {
+        const source = trigger.getAttribute('data-lightbox-src');
+        const alt = trigger.getAttribute('data-lightbox-alt') || '';
+        const thumbnail = trigger.querySelector('img');
+        if (!source) return;
+
+        image.src = source;
+        image.alt = alt;
+        caption.textContent = thumbnail?.alt || '';
+        lightbox.showModal();
+        close.focus();
+      });
+    });
+
+    close.addEventListener('click', () => lightbox.close());
+    lightbox.addEventListener('click', (event) => {
+      if (event.target === lightbox) lightbox.close();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && lightbox.open) lightbox.close();
+    });
+  }
+
+  function initDiwaliNavigation() {
+    const target = document.getElementById('gaushala-event');
+    if (!target) return;
+    const heading = target.querySelector('h2');
+
+    document.querySelectorAll('a[href="#gaushala-event"]').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (window.location.hash !== '#gaushala-event') {
+          window.history.pushState(null, '', '#gaushala-event');
+        }
+        const scrollPadding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+        if (!prefersReducedMotion.matches) {
+          let attempts = 0;
+          let settleTimer;
+          const alignTarget = () => {
+            const correction = target.getBoundingClientRect().top - scrollPadding;
+            if (Math.abs(correction) > 8 && attempts < 5) {
+              attempts += 1;
+              window.scrollTo({
+                top: window.scrollY + correction,
+                behavior: 'smooth'
+              });
+            }
+            window.clearTimeout(settleTimer);
+            settleTimer = window.setTimeout(() => {
+              window.removeEventListener('scrollend', alignTarget);
+            }, 1200);
+          };
+          window.addEventListener('scrollend', alignTarget);
+          window.setTimeout(() => window.removeEventListener('scrollend', alignTarget), 10000);
+        }
+        window.scrollTo({
+          top: target.getBoundingClientRect().top + window.scrollY - scrollPadding,
+          behavior: prefersReducedMotion.matches ? 'auto' : 'smooth'
+        });
+        heading?.focus({ preventScroll: true });
+      });
+    });
+  }
+
   function initSeedStory() {
     const story = document.querySelector('.seed-story');
     const stage = story?.querySelector('.story-art');
@@ -129,7 +201,7 @@ function initLoader() {
       if (label) label.textContent = stageNames[index];
       if (count) count.textContent = `0${index + 1} / 0${beats.length}`;
       if (progress && window.gsap) {
-        window.gsap.to(progress, { scaleX: (index + 1) / beats.length, duration: .42, ease: 'power2.out', overwrite: true });
+        window.gsap.to(progress, { scaleX: (index + 1) / beats.length, duration: .42, ease: 'power2.out', overwrite: true ,clearProps: "transform,opacity,visibility",});
       } else if (progress) {
         progress.style.transform = `scaleX(${(index + 1) / beats.length})`;
       }
@@ -334,7 +406,7 @@ function initLoader() {
       {
         modalId: 'eventModal', formId: 'eventForm', closeId: 'eventModalClose',
         publicKey: '5ATVd4xHeSdttqrIw', serviceId: 'service_2tfcpgi', templateId: 'template_nw8sg54',
-        trigger: '.event-register',
+        trigger: '[data-register-event]',
         fields: ['evtName', 'evtEmail', 'evtPhone', 'evtSelect', 'evtCount', 'evtMessage'],
         getParams: (fields) => ({
           name: fields[0], email: fields[1], phone: fields[2], event: fields[3], count: fields[4] || '1',
@@ -449,6 +521,622 @@ function initLoader() {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
   }
+/* =========================================================
+   CORE TEAM — GSAP STORY REVEAL
+   Plays the story first, then reveals the team cards.
+   Falls back to static content if GSAP is unavailable.
+   ========================================================= */
+
+function initCoreTeamStory() {
+    const coreGroup = document.querySelector(".team-group--core");
+
+    if (!coreGroup) return;
+
+    const story = coreGroup.querySelector(".core-team-story");
+    const grid = coreGroup.querySelector(".team-grid");
+    const cards = [...coreGroup.querySelectorAll(".team-card")];
+
+    /*
+     * Remove AOS attributes from this group.
+     * GSAP owns its animations, avoiding two libraries
+     * trying to control the same elements.
+     */
+    coreGroup.removeAttribute("data-aos");
+
+    coreGroup.querySelectorAll("[data-aos]").forEach((element) => {
+        element.removeAttribute("data-aos");
+    });
+
+    if (!story || !grid) return;
+
+    /*
+     * With reduced motion, missing GSAP, or missing
+     * ScrollTrigger, simply display the complete content.
+     */
+    if (
+        prefersReducedMotion.matches ||
+        !window.gsap ||
+        !window.ScrollTrigger
+    ) {
+        return;
+    }
+
+    const gsap = window.gsap;
+    const ScrollTrigger = window.ScrollTrigger;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const topline = story.querySelector(
+        ".core-team-story__topline"
+    );
+
+    const overline = story.querySelector(
+        ".core-team-story__overline"
+    );
+
+    const titleLines = [
+        ...story.querySelectorAll(".core-team-story__title-line")
+    ];
+
+    const description = story.querySelector(
+        ".core-team-story__description"
+    );
+
+    const footnote = story.querySelector(
+        ".core-team-story__footnote"
+    );
+
+    const chapters = [
+        ...story.querySelectorAll(".core-team-chapter")
+    ];
+
+    const introElements = [
+        topline,
+        overline,
+        ...titleLines,
+        description,
+        footnote,
+        ...chapters
+    ].filter(Boolean);
+
+    /*
+     * Initial states are applied only when animations
+     * are supported and motion is permitted.
+     */
+    gsap.set(introElements, {
+        autoAlpha: 0,
+        y: 24
+    });
+
+    const introTimeline = gsap.timeline({
+        scrollTrigger: {
+            trigger: story,
+            start: "top 78%",
+            once: true
+        }
+    });
+
+    // 1. The story label enters first.
+    introTimeline.to(topline, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.55,
+        ease: "power2.out"
+    }, 0);
+
+    // 2. Introduce the opening statement.
+    introTimeline.to(overline, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.55,
+        ease: "power2.out"
+    }, 0.08);
+
+    // 3. Reveal the headline line by line.
+    introTimeline.to(titleLines, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.8,
+        stagger: 0.13,
+        ease: "power3.out"
+    }, 0.16);
+
+    // 4. Bring in the supporting story.
+    introTimeline.to(description, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.65,
+        ease: "power2.out"
+    }, 0.53);
+
+    introTimeline.to(footnote, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.5,
+        ease: "power2.out"
+    }, 0.66);
+
+    // 5. Introduce the chapters in reading order.
+    introTimeline.to(chapters, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.68,
+        stagger: 0.14,
+        ease: "power3.out"
+    }, 0.3);
+
+    /*
+     * 6. Reveal the existing profile cards as the visitor
+     * scrolls down to meet the people behind the story.
+     */
+    if (cards.length) {
+        gsap.set(cards, {
+            autoAlpha: 0,
+            y: 32,
+            scale: 0.985
+        });
+
+        gsap.to(cards, {
+            autoAlpha: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.75,
+            stagger: 0.16,
+            ease: "power3.out",
+            scrollTrigger: {
+                trigger: grid,
+                start: "top 84%",
+                once: true
+            }
+        });
+    }
+}
+/* =========================================================
+   GUTHLI FOUNDATION — CINEMATIC SCROLL NARRATIVE
+   Replace the previous initScrollNarrative() with this entire
+   function. Keep initCoreTeamStory() as a separate function.
+   Requires GSAP + ScrollTrigger already loaded by index.html.
+   ========================================================= */
+function initScrollNarrative() {
+    const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+    ).matches;
+    const gsap = window.gsap;
+    const ScrollTrigger = window.ScrollTrigger;
+    const about = document.querySelector("#about");
+    const footer = document.querySelector("footer#contact, #contact.footer");
+
+    if (!about) return;
+
+    const sections = [...document.querySelectorAll("main section.section")];
+    const startIndex = sections.findIndex((section) => section.id === "about");
+    const narrativeSections = startIndex >= 0
+        ? sections.slice(startIndex)
+        : [];
+
+    if (!narrativeSections.length) return;
+
+    /* A small chapter rail—created in JS so no extra HTML is required. */
+    const chapterStops = [
+        { id: "about", label: "The belief" },
+        { id: "why-exist", label: "The need" },
+        { id: "vision", label: "The future" },
+        { id: "focus", label: "The plan" },
+        { id: "projects", label: "Action in the field" },
+        { id: "gallery", label: "Moments that matter" },
+        { id: "values", label: "What guides us" },
+        { id: "team", label: "The people" },
+        { id: "donate", label: "Your turn" },
+        { id: "contact", label: "Stay connected" }
+    ];
+
+    const chapterForSection = {
+        about: 0,
+        "why-exist": 1,
+        vision: 2,
+        mission: 2,
+        approach: 2,
+        focus: 3,
+        projects: 4,
+        events: 4,
+        gallery: 5,
+        values: 6,
+        workflow: 6,
+        impact: 6,
+        team: 7,
+        join: 7,
+        careers: 7,
+        roadmap: 7,
+        donate: 8,
+        contact: 9
+    };
+
+    let nav = document.querySelector(".story-nav");
+    if (!nav) {
+        nav = document.createElement("nav");
+        nav.className = "story-nav";
+        nav.setAttribute("aria-label", "Explore the Guthli story");
+        nav.innerHTML = `
+            <div class="story-nav__counter" aria-hidden="true">
+                <span class="story-nav__current">01</span>
+                <span class="story-nav__total">/ 10</span>
+            </div>
+            <div class="story-nav__rail" aria-hidden="true">
+                <span class="story-nav__track"></span>
+                <span class="story-nav__fill"></span>
+                <div class="story-nav__links">
+                    ${chapterStops.map((chapter, index) => `
+                        <a class="story-nav__link${index === 0 ? " is-active" : ""}"
+                           href="#${chapter.id}"
+                           data-chapter-index="${index}"
+                           data-label="${chapter.label}"
+                           aria-label="Go to chapter ${String(index + 1).padStart(2, "0")}: ${chapter.label}"
+                           title="${chapter.label}">
+                            <span class="story-nav__dot"></span>
+                        </a>
+                    `).join("")}
+                </div>
+            </div>
+            <span class="story-nav__caption" aria-hidden="true">SCROLL TO GROW</span>
+        `;
+        document.body.append(nav);
+    }
+
+    const navLinks = [...nav.querySelectorAll(".story-nav__link")];
+    const navCurrent = nav.querySelector(".story-nav__current");
+    const navFill = nav.querySelector(".story-nav__fill");
+    let activeChapter = -1;
+
+    const setActiveChapter = (index) => {
+        if (index < 0 || index >= chapterStops.length || index === activeChapter) return;
+        activeChapter = index;
+        if (navCurrent) navCurrent.textContent = String(index + 1).padStart(2, "0");
+        navLinks.forEach((link, linkIndex) => {
+            const isActive = linkIndex === index;
+            link.classList.toggle("is-active", isActive);
+            if (isActive) link.setAttribute("aria-current", "location");
+            else link.removeAttribute("aria-current");
+        });
+    };
+
+    /* The no-motion/no-GSAP path keeps the ordinary page fully usable. */
+    if (reduceMotion || !gsap || !ScrollTrigger) {
+        nav.remove();
+        return;
+    }
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* GSAP becomes the owner of these sections; remove old AOS attributes
+       so the existing IntersectionObserver cannot animate the same nodes. */
+    [...narrativeSections, ...(footer ? [footer] : [])].forEach((root) => {
+        root.removeAttribute("data-aos");
+        root.querySelectorAll("[data-aos]").forEach((element) => {
+            element.removeAttribute("data-aos");
+            element.removeAttribute("data-aos-delay");
+        });
+    });
+
+    const isAlreadyReadable = (element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.top < window.innerHeight * 0.64 && rect.bottom > 0;
+    };
+
+    const addSectionHeaderMotion = (section) => {
+        const header = section.querySelector(":scope > .container > .section-header")
+            || section.querySelector(".section-header");
+        if (!header) return;
+
+        const tag = header.querySelector(".section-tag");
+        const title = header.querySelector(".section-title");
+        const divider = header.querySelector(".section-divider");
+
+        if (tag && !isAlreadyReadable(tag)) {
+            gsap.fromTo(tag,
+                { autoAlpha: 0, x: -18 },
+                {
+                    autoAlpha: 1, x: 0, duration: 0.55,
+                    ease: "power3.out", clearProps: "transform,opacity,visibility",
+                    scrollTrigger: { trigger: header, start: "top 83%", once: true }
+                }
+            );
+        }
+
+        if (title && !isAlreadyReadable(title)) {
+            gsap.fromTo(title,
+                { autoAlpha: 0, y: 34, clipPath: "inset(0 0 100% 0)" },
+                {
+                    autoAlpha: 1, y: 0, clipPath: "inset(0 0 0% 0)",
+                    duration: 0.95, ease: "power4.out",
+                    clearProps: "clipPath,transform,opacity,visibility",
+                    scrollTrigger: { trigger: header, start: "top 83%", once: true }
+                }
+            );
+        }
+
+        if (divider && !isAlreadyReadable(divider)) {
+            gsap.fromTo(divider,
+                { autoAlpha: 0, scaleX: 0, transformOrigin: "center center" },
+                {
+                    autoAlpha: 1, scaleX: 1, duration: 0.72,
+                    ease: "power3.inOut", clearProps: "transform,opacity,visibility",
+                    scrollTrigger: { trigger: header, start: "top 79%", once: true }
+                }
+            );
+        }
+    };
+
+    const revealBatch = (elements, sectionId) => {
+        const pending = elements.filter((element) => !isAlreadyReadable(element));
+        if (!pending.length) return;
+
+        gsap.set(pending, { autoAlpha: 0 });
+        ScrollTrigger.batch(pending, {
+            start: "top 88%",
+            once: true,
+            interval: 0.08,
+            batchMax: 3,
+            onEnter: (batch) => {
+                gsap.fromTo(batch,
+                    {
+                        autoAlpha: 0,
+                        y: (index) => index % 2 ? 38 : 30,
+                        x: (index, element) => {
+                            if (sectionId === "about") {
+                                return element.classList.contains("about-visual") ? 46 : -46;
+                            }
+                            if (sectionId === "vision") {
+                                return element.classList.contains("vision-visual") ? -42 : 42;
+                            }
+                            if (sectionId === "why-exist") {
+                                return element.classList.contains("solution-card") ? 52 : -52;
+                            }
+                            if (sectionId === "projects") return index % 2 ? 34 : -34;
+                            return 0;
+                        },
+                        scale: (index, element) => element.classList.contains("team-group") ? 1 : 0.985,
+                        rotateZ: (index, element) => element.classList.contains("team-group") ? 0 : (index % 2 ? 0.8 : -0.8)
+                    },
+                    {
+                        autoAlpha: 1, x: 0, y: 0, scale: 1, rotateZ: 0,
+                        duration: 0.82,
+                        stagger: { each: 0.1, from: "start" },
+                        ease: "power3.out",
+                        clearProps: "transform,opacity,visibility",
+                        overwrite: "auto"
+                    }
+                );
+            }
+        });
+    };
+
+    const selectorsBySection = {
+        about: ".about-content, .about-visual",
+        "why-exist": ".why-card",
+        vision: ".vision-visual, .vision-content",
+        mission: ".mission-card",
+        approach: ".approach-card",
+        focus: ".focus-card",
+        projects: ".timeline-item",
+        events: ".event-card",
+        values: ".value-card",
+        workflow: ".workflow-step",
+        impact: ".impact-counter",
+        team: ".team-group:not(.team-group--core)",
+        join: ".join-card",
+        careers: ".job-card, .careers-cta",
+        roadmap: ".roadmap-item",
+        donate: ".cta-buttons",
+        contact: ".footer-grid > *, .footer-bottom"
+    };
+
+    /* Create triggers in DOM order so the gallery pin is registered before
+       the sections that follow it. That keeps downstream measurements sound. */
+    narrativeSections.forEach((section) => {
+        const chapterIndex = chapterForSection[section.id];
+        if (Number.isInteger(chapterIndex)) {
+            ScrollTrigger.create({
+                trigger: section,
+                start: "top 53%",
+                end: "bottom 53%",
+                onEnter: () => setActiveChapter(chapterIndex),
+                onEnterBack: () => setActiveChapter(chapterIndex)
+            });
+        }
+
+        addSectionHeaderMotion(section);
+
+        /* The closing appeal is treated as a four-line manifesto, not a
+           conventional section heading. Each line arrives in sequence. */
+        if (section.id === "donate") {
+            const manifestoLines = [...section.querySelectorAll(".cta-title")]
+                .filter((element) => !isAlreadyReadable(element));
+            if (manifestoLines.length) {
+                gsap.fromTo(manifestoLines,
+                    { autoAlpha: 0, y: 42, clipPath: "inset(0 0 100% 0)" },
+                    {
+                        autoAlpha: 1, y: 0, clipPath: "inset(0 0 0% 0)",
+                        duration: 0.9, stagger: 0.14, ease: "power4.out",
+                        clearProps: "clipPath,transform,opacity,visibility",
+                        scrollTrigger: { trigger: section, start: "top 75%", once: true }
+                    }
+                );
+            }
+        }
+
+        const selector = selectorsBySection[section.id];
+        if (selector) {
+            const elements = [...section.querySelectorAll(selector)]
+                .filter((element) => !element.closest(".team-group--core"));
+            revealBatch(elements, section.id);
+        }
+
+        /* A little depth on Guthli's own botanical illustrations. Animate
+           the SVG inside the scene, not the pointer-responsive wrapper. */
+        if (section.id === "about") {
+            const plant = section.querySelector(".about-svg");
+            if (plant) {
+                gsap.fromTo(plant,
+                    { y: 34 },
+                    {
+                        y: -26, ease: "none",
+                        scrollTrigger: {
+                            trigger: section, start: "top bottom", end: "bottom top", scrub: 0.8
+                        }
+                    }
+                );
+            }
+        }
+
+        if (section.id === "vision") {
+            const canopy = section.querySelector(".vision-svg");
+            if (canopy) {
+                gsap.fromTo(canopy,
+                    { y: 30, scale: 0.975, transformOrigin: "center center" },
+                    {
+                        y: -24, scale: 1.015, ease: "none",
+                        scrollTrigger: {
+                            trigger: section, start: "top bottom", end: "bottom top", scrub: 0.9
+                        }
+                    }
+                );
+            }
+        }
+
+        /* Draw the program timeline's central line in sync with scroll. */
+        if (section.id === "projects") {
+            const line = section.querySelector(".timeline-line");
+            if (line) {
+                gsap.fromTo(line,
+                    { scaleY: 0, transformOrigin: "top center" },
+                    {
+                        scaleY: 1, ease: "none",
+                        scrollTrigger: {
+                            trigger: section,
+                            start: "top 62%",
+                            end: "bottom 56%",
+                            scrub: 0.65
+                        }
+                    }
+                );
+            }
+        }
+
+        /* Cinematic horizontal gallery on desktop. The actual setup is
+           isolated by matchMedia and reverts on resize/reduced-motion. */
+        if (section.id === "gallery") {
+            const mm = gsap.matchMedia();
+            mm.add("(min-width: 1100px) and (prefers-reduced-motion: no-preference)", () => {
+                const gallery = section;
+                const container = gallery.querySelector(":scope > .container");
+                const track = gallery.querySelector(".gallery-grid");
+                const cards = [...gallery.querySelectorAll(".gallery-card")];
+                if (!container || !track || cards.length < 2) return;
+
+                const distance = () => Math.max(0, track.scrollWidth - container.clientWidth);
+                if (distance() < 80) return;
+
+                const horizontalTween = gsap.to(track, {
+                    x: () => -distance(),
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: gallery,
+                        start: "top top",
+                        end: () => `+=${distance()}`,
+                        pin: true,
+                        scrub: 0.85,
+                        anticipatePin: 1,
+                        invalidateOnRefresh: true
+                    }
+                });
+
+                const cardsToReveal = cards.filter((card) => !isAlreadyReadable(card));
+                if (cardsToReveal.length) {
+                    gsap.fromTo(cardsToReveal,
+                        { autoAlpha: 0, y: 36, rotateZ: (index) => index % 2 ? 1.2 : -1.2, scale: 0.97 },
+                        {
+                            autoAlpha: 1, y: 0, rotateZ: 0, scale: 1,
+                            duration: 0.72, stagger: 0.08, ease: "power3.out",
+                            clearProps: "transform,opacity,visibility",
+                            scrollTrigger: { trigger: gallery, start: "top 76%", once: true }
+                        }
+                    );
+                }
+
+                /* Each photograph gets a soft edge reveal as it enters the
+                   horizontal frame. Child triggers use containerAnimation. */
+                cards.forEach((card) => {
+                    const image = card.querySelector("img");
+                    if (!image) return;
+                    gsap.fromTo(image,
+                        { clipPath: "inset(0 0 0 16%)" },
+                        {
+                            clipPath: "inset(0 0 0 0%)",
+                            ease: "none",
+                            scrollTrigger: {
+                                trigger: card,
+                                containerAnimation: horizontalTween,
+                                start: "left 92%",
+                                end: "left 22%",
+                                scrub: true
+                            }
+                        }
+                    );
+                });
+            });
+        }
+    });
+
+    if (footer) {
+        ScrollTrigger.create({
+            trigger: footer,
+            start: "top 53%",
+            end: "bottom 53%",
+            onEnter: () => setActiveChapter(9),
+            onEnterBack: () => setActiveChapter(9)
+        });
+    }
+
+    /* Reveal the chapter rail only from Who We Are through the footer. */
+    ScrollTrigger.create({
+        trigger: about,
+        start: "top 70%",
+        endTrigger: footer || narrativeSections[narrativeSections.length - 1],
+        end: "bottom top",
+        onEnter: () => nav.classList.add("is-visible"),
+        onEnterBack: () => nav.classList.add("is-visible"),
+        onLeave: () => nav.classList.remove("is-visible"),
+        onLeaveBack: () => nav.classList.remove("is-visible")
+    });
+
+    /* One continuous progress line across the full story. */
+    if (navFill) {
+        gsap.fromTo(navFill,
+            { scaleY: 0 },
+            {
+                scaleY: 1,
+                ease: "none",
+                scrollTrigger: {
+                    trigger: about,
+                    start: "top center",
+                    endTrigger: footer || narrativeSections[narrativeSections.length - 1],
+                    end: "bottom center",
+                    scrub: 0.2
+                }
+            }
+        );
+    }
+
+    /* Let the browser finish loading natural dimensions before measuring
+       pins; refresh again if lazy-loaded photos arrive later. */
+    window.addEventListener("load", () => ScrollTrigger.refresh(), { once: true });
+    document.querySelectorAll("#gallery img, #about img").forEach((image) => {
+        if (!image.complete) {
+            image.addEventListener("load", () => ScrollTrigger.refresh(), { once: true });
+        }
+    });
+    requestAnimationFrame(() => ScrollTrigger.refresh());
+}
 
   function initNewsletter() {
     const form = document.getElementById('newsletterForm');
@@ -462,15 +1150,25 @@ function initLoader() {
       }
     });
   }
-
-  document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     initLoader();
     initNavigation();
     initBanner();
+    initDiwaliNavigation();
+
+    // Existing opening story.
     initSeedStory();
+
+    // New continuous narrative, starting at Who We Are.
+    initScrollNarrative();
+
+    // Existing Core Team story animation.
+    initCoreTeamStory();
+
     initGrowthIllustrations();
     initRevealsAndCounters();
     initModals();
+    initDiwaliLightbox();
     initNewsletter();
-  }, { once: true });
+}, { once: true });
 })();
